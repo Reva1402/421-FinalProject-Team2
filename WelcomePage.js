@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { database, auth } from './firebaseConfig';
+import { database, auth, firestore } from './firebaseConfig';
 import './Styling.css';
-import { ref, set, get } from 'firebase/database';
+import { ref, doc, setDoc, getDoc } from 'firebase/firestore';
+
 
 
 const SignupPage = () => {
@@ -93,7 +94,7 @@ const SignupPage = () => {
             const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
             const user = userCredential.user;
 
-            await set(ref(database, 'users/' + user.uid), {
+            await setDoc(doc(firestore, 'users/' + user.uid), {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 email: formData.email,
