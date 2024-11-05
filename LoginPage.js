@@ -25,7 +25,7 @@ const LoginPage = () => {
       const userRole = snapshot.val();
 
       if (userRole === 'admin') {
-        navigate('/adminhomepage');
+        navigate('/admin');
       } else if (userRole === 'standarduser') {
         navigate('/userhomepage');
       } else if (userRole === 'moderator') {
