@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, database } from './firebaseConfig.js';
+import { auth, firestore} from './firebaseConfig.js';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import './Styling.css';
 import Model from './Model.js'; 
-import { ref, get } from 'firebase/database';
+import { doc, getDoc } from 'firebase/firestore';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -20,21 +20,30 @@ const LoginPage = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      const roleRef = ref(database, 'users/' + user.uid + '/role');
-      const snapshot = await get(roleRef);
-      const userRole = snapshot.val();
+      const roleRef = doc(firestore, 'users', user.uid);
+      const snapshot = await getDoc(roleRef);
+
+      
+      if (snapshot.exists()) {
+        const userRole = snapshot.data().role;
 
       if (userRole === 'admin') {
         navigate('/admin');
+        console.log('User role:', userRole);
       } else if (userRole === 'standarduser') {
         navigate('/userhomepage');
       } else if (userRole === 'moderator') {
         navigate('/moderatorhomepage');
       }
+
+      } else {
+        console.log('No such document!');
+      }
     } catch (error) {
       console.error('Error during login:', error);
       alert('Login failed. Please try again.');
     }
+    
   };
 
   const handlePasswordReset = async (e) => {
