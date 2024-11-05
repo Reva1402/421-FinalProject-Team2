@@ -7,6 +7,8 @@ import HomePage from './UserHomePage';
 import AdminDashboard from './AdminDashboard';
 import UserManagement from './UserManagement';
 import CreateEvent from './CreateEvent';
+import MyEvents from './MyEvents';
+import EventDetails from './EventDetails';
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
       <Route path="admin" element={<AdminDashboard />} />
       <Route path="usermanagement" element={<UserManagement />} />
       <Route path="createevent" element={<CreateEvent />} />
+   <Route path="/myevents" element={<MyEvents />} />
+      <Route path="/event/:id" element={<EventDetails />} />
       </Routes>
       </Router>
     </div>
