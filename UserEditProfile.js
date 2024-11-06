@@ -8,10 +8,18 @@ import './UserEditProfile.css';
 const UserEditProfile = () => {
     const navigate = useNavigate();
     const user = auth.currentUser;
-    const [displayName, setDisplayName] = useState('');
+
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [address, setAddress] = useState('');
+    const [gender, setGender] = useState('');
+    const [role, setRole] = useState('');
+    const [dateOfBirth, setDateOfBirth] = useState('');
+    const [country, setCountry] = useState('');
+    const [province, setProvince] = useState('');
+    const [profilePicture, setProfilePicture] = useState('default-profile.png');
     const [error, setError] = useState('');
     const [popupMessage, setPopupMessage] = useState('');
     const [isPopupVisible, setIsPopupVisible] = useState(false);
@@ -24,10 +32,17 @@ const UserEditProfile = () => {
                     const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
                         const data = docSnap.data();
-                        setDisplayName(data.displayName || '');
+                        setFirstName(data.firstName || '');
+                        setLastName(data.lastName || '');
                         setEmail(data.email || '');
                         setPhoneNumber(data.phoneNumber || '');
                         setAddress(data.address || '');
+                        setGender(data.gender || '');
+                        setRole(data.role || '');
+                        setDateOfBirth(data.dateOfBirth || '');
+                        setCountry(data.country || '');
+                        setProvince(data.province || '');
+                        setProfilePicture(data.profilePicture || 'default-profile.png');
                     } else {
                         setError('User profile not found. Please check your account.');
                     }
@@ -50,12 +65,18 @@ const UserEditProfile = () => {
             if (user) {
                 const userDoc = doc(firestore, 'users', user.uid);
                 await setDoc(userDoc, {
-                    displayName,
+                    firstName,
+                    lastName,
                     email,
                     phoneNumber,
                     address,
+                    gender,
+                    role,
+                    dateOfBirth,
+                    country,
+                    province,
+                    profilePicture,
                 }, { merge: true });
-                console.log('User document updated successfully in Firestore');
 
                 setPopupMessage('Profile updated successfully!');
                 setIsPopupVisible(true);
@@ -87,10 +108,10 @@ const UserEditProfile = () => {
         <div className="edit-profile">
             <nav className="navbar">
                 <div className="navbar-brand" onClick={() => navigate('/profile')}>
-                    Hi, {displayName || 'User'}
+                    Hi, {firstName || 'User'}
                 </div>
                 <ul className="nav-links">
-                    <li className="nav-item" onClick={() => navigate('/profile')}>Profile</li>
+                    <li className="nav-item" onClick={() => navigate('/userProfile')}>Profile</li>
                     <li className="nav-item" onClick={() => navigate('/events')}>My Events</li>
                     <li className="nav-item" onClick={() => navigate('/postanevent')}>Post An Event</li>
                     <li className="nav-item" onClick={() => navigate('/notifications')}>Notifications</li>
@@ -103,12 +124,22 @@ const UserEditProfile = () => {
             {error && <p className="error">{error}</p>}
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="displayName">Display Name:</label>
+                    <label htmlFor="firstName">First Name:</label>
                     <input
                         type="text"
-                        id="displayName"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="lastName">Last Name:</label>
+                    <input
+                        type="text"
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
                         required
                     />
                 </div>
@@ -139,6 +170,60 @@ const UserEditProfile = () => {
                         id="address"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label htmlFor="gender">Gender:</label>
+                    <input
+                        type="text"
+                        id="gender"
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label htmlFor="role">Role:</label>
+                    <input
+                        type="text"
+                        id="role"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label htmlFor="dateOfBirth">Date of Birth:</label>
+                    <input
+                        type="date"
+                        id="dateOfBirth"
+                        value={dateOfBirth}
+                        onChange={(e) => setDateOfBirth(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label htmlFor="country">Country:</label>
+                    <input
+                        type="text"
+                        id="country"
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label htmlFor="province">Province:</label>
+                    <input
+                        type="text"
+                        id="province"
+                        value={province}
+                        onChange={(e) => setProvince(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label htmlFor="profilePicture">Profile Picture URL:</label>
+                    <input
+                        type="text"
+                        id="profilePicture"
+                        value={profilePicture}
+                        onChange={(e) => setProfilePicture(e.target.value)}
                     />
                 </div>
                 <button type="submit">Update Profile</button>
