@@ -1,30 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { auth } from './firebaseConfig';
+import { auth, firestore } from './firebaseConfig';
+import { collection, getDocs } from 'firebase/firestore';
 import './UserHomePage.css';
-
-import holiImage1 from './images/holi1.jpg';
-import holiImage2 from './images/holi2.jpg';
-import holiImage3 from './images/holi3.jpg';
-import christmasImage1 from './images/christmas1.jpg';
-import christmasImage2 from './images/christmas2.jpg';
-import christmasImage3 from './images/christmas3.jpg';
 
 const HomePage = () => {
     const navigate = useNavigate();
-    const [likedHoli, setLikedHoli] = useState(false);
-    const [commentsHoli, setCommentsHoli] = useState([]);
-    const [newCommentHoli, setNewCommentHoli] = useState('');
-    const [currentHoliImageIndex, setCurrentHoliImageIndex] = useState(0);
+    const [events, setEvents] = useState([]);
+    const [likes, setLikes] = useState({});
+    const [comments, setComments] = useState({});
+    const [newComments, setNewComments] = useState({});
+    const [currentImageIndex, setCurrentImageIndex] = useState({});
+    const [userName, setUserName] = useState('');
 
-    const [likedChristmas, setLikedChristmas] = useState(false);
-    const [commentsChristmas, setCommentsChristmas] = useState([]);
-    const [newCommentChristmas, setNewCommentChristmas] = useState('');
-    const [currentChristmasImageIndex, setCurrentChristmasImageIndex] = useState(0);
+    useEffect(() => {
+        const fetchEvents = async () => {
+            const eventsRef = collection(firestore, 'events');
+            const eventSnapshot = await getDocs(eventsRef);
+            const eventList = eventSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setEvents(eventList);
+        };
 
-    const holiImages = [holiImage1, holiImage2, holiImage3];
-    const christmasImages = [christmasImage1, christmasImage2, christmasImage3];
+        fetchEvents();
+
+        const unsubscribe = auth.onAuthStateChanged(currentUser => {
+            if (currentUser) {
+                setUserName(currentUser.displayName || currentUser.email);
+            } else {
+                setUserName('Guest');
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const handleLogout = async () => {
         try {
@@ -36,164 +45,159 @@ const HomePage = () => {
         }
     };
 
-    const handleLikeToggleHoli = () => {
-        setLikedHoli(!likedHoli);
+    const handleLike = (eventId) => {
+        setLikes(prevLikes => ({
+            ...prevLikes,
+            [eventId]: true
+        }));
     };
 
-    const handleCommentSubmitHoli = (e) => {
+    const handleUnlike = (eventId) => {
+        setLikes(prevLikes => ({
+            ...prevLikes,
+            [eventId]: false
+        }));
+    };
+
+    const handleCommentSubmit = (eventId, e) => {
         e.preventDefault();
-        if (newCommentHoli.trim()) {
-            setCommentsHoli([...commentsHoli, newCommentHoli]);
-            setNewCommentHoli('');
+        if (newComments[eventId]?.trim()) {
+            setComments(prevComments => ({
+                ...prevComments,
+                [eventId]: [...(prevComments[eventId] || []), newComments[eventId]]
+            }));
+            setNewComments(prevNewComments => ({ ...prevNewComments, [eventId]: '' }));
         }
     };
 
-    const handleReportEventHoli = () => {
-        alert("Holi event has been reported. Our moderators will review it shortly.");
+    const handleNextImage = (eventId, images) => {
+        setCurrentImageIndex(prevIndex => ({
+            ...prevIndex,
+            [eventId]: (prevIndex[eventId] + 1) % images.length
+        }));
     };
 
-    const handleNextHoliImage = () => {
-        setCurrentHoliImageIndex((prevIndex) => (prevIndex + 1) % holiImages.length);
+    const handlePreviousImage = (eventId, images) => {
+        setCurrentImageIndex(prevIndex => ({
+            ...prevIndex,
+            [eventId]: (prevIndex[eventId] - 1 + images.length) % images.length
+        }));
     };
 
-    const handlePreviousHoliImage = () => {
-        setCurrentHoliImageIndex((prevIndex) => (prevIndex - 1 + holiImages.length) % holiImages.length);
+    const handleReport = (eventName) => {
+        alert(`Event "${eventName}" has been reported. Our moderators will review it shortly.`);
     };
 
-    const handleLikeToggleChristmas = () => {
-        setLikedChristmas(!likedChristmas);
-    };
-
-    const handleCommentSubmitChristmas = (e) => {
-        e.preventDefault();
-        if (newCommentChristmas.trim()) {
-            setCommentsChristmas([...commentsChristmas, newCommentChristmas]);
-            setNewCommentChristmas('');
-        }
-    };
-
-    const handleReportEventChristmas = () => {
-        alert("Christmas event has been reported. Our moderators will review it shortly.");
-    };
-
-    const handleNextChristmasImage = () => {
-        console.log("Next Image Clicked");
-        setCurrentChristmasImageIndex((prevIndex) => (prevIndex + 1) % christmasImages.length);
-    };
-    
-    const handlePreviousChristmasImage = () => {
-        console.log("Previous Image Clicked");
-        setCurrentChristmasImageIndex((prevIndex) => (prevIndex - 1 + christmasImages.length) % christmasImages.length);
-    };
-    
     return (
         <div className="home-page">
             <nav className="navbar">
-                <div className="navbar-brand" onClick={() => navigate('/')}>
-                    Community Event Platform
-                </div>
+                <span>Hi, {userName}</span>
                 <ul className="nav-links">
-                    <li className="nav-item" onClick={() => navigate('/profile')}>Profile</li>
-                    <li className="nav-item" onClick={() => navigate('/events')}>My Events</li>
-                    <li className="nav-item" onClick={() => navigate('/postanevent')}>Post An Event</li>
-                    <li className="nav-item" onClick={() => navigate('/notifications')}>Notifications</li>
-                    <li className="nav-item" onClick={() => navigate('/followers')}>Followers</li>
+                    {userName !== 'Guest' && (
+                        <>
+                            <li onClick={() => navigate('/profile')}>Profile</li>
+                            <li onClick={() => navigate('/UserEditProfile')}>Edit Profile</li>
+                            <li onClick={() => navigate('/events')}>My Events</li>
+                            <li onClick={() => navigate('/createevent')}>Create An Event</li>
+                            <li onClick={() => navigate('/notifications')}>Notifications</li>
+                            <li onClick={() => navigate('/followers')}>Followers</li>
+                        </>
+                    )}
                 </ul>
-                <button className="logout-btn" onClick={handleLogout}>Logout</button>
+                <div className="user-greeting"></div>
+                {userName !== 'Guest' && (
+                    <button className="logout-btn" onClick={handleLogout}>Logout</button>
+                )}
             </nav>
 
             <div className="home-content">
-                <h2>Welcome to the Community Event Platform</h2>
+                <h2>Welcome to Eventopia</h2>
                 <p>Explore events, interact with the community, and stay connected!</p>
 
-                <div className="event-card">
-                    <h3>Holi Festival Celebration</h3>
-                    <p>Date: December 25, 2024</p>
-                    <p>Location: Angrinon Park, Montreal</p>
-                    <p>Description: Join us for a vibrant Holi celebration with colors, music, and dance! Open to all ages. Wear white and prepare to get colorful!</p>
+                {events.map(event => (
+                    <div key={event.id} className="event-card">
+                        <h3>{event.name}</h3>
+                        <p>Date: {event.date}</p>
+                        <p>Location: {event.location}</p>
+                        <p>{event.description}</p>
 
-                    <div className="holi-image-carousel">
-                        <button onClick={handlePreviousHoliImage} className="carousel-btn">&lt;</button>
-                        <img src={holiImages[currentHoliImageIndex]} alt="Holi Event" className="holi-image" />
-                        <button onClick={handleNextHoliImage} className="carousel-btn">&gt;</button>
+                        {event.images && event.images.length > 0 && (
+                            <div className="event-image-carousel">
+                                <button
+                                    onClick={() => handlePreviousImage(event.id, event.images)}
+                                    className="carousel-btn"
+                                >
+                                    &lt;
+                                </button>
+                                <img
+                                    src={event.images[currentImageIndex[event.id] || 0]}
+                                    alt={`${event.name} Event`}
+                                    className="event-image"
+                                />
+                                <button
+                                    onClick={() => handleNextImage(event.id, event.images)}
+                                    className="carousel-btn"
+                                >
+                                    &gt;
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="action-buttons">
+                            <button
+                                onClick={() => handleLike(event.id)}
+                                className="like-btn"
+                                disabled={likes[event.id]}
+                            >
+                                Like
+                            </button>
+                            <button
+                                onClick={() => handleUnlike(event.id)}
+                                className="unlike-btn"
+                                disabled={!likes[event.id]}
+                            >
+                                Unlike
+                            </button>
+                            <button
+                                onClick={() => handleReport(event.name)}
+                                className="report-btn"
+                            >
+                                Report this Event
+                            </button>
+                        </div>
+
+                        <div className="comments-section">
+                            <h4>Comments</h4>
+                            <ul className="comments-list">
+                                {(comments[event.id] || []).map((comment, index) => (
+                                    <li key={index}>{comment}</li>
+                                ))}
+                            </ul>
+                            <form onSubmit={(e) => handleCommentSubmit(event.id, e)} className="comment-form">
+                                <input
+                                    type="text"
+                                    placeholder="Add a comment..."
+                                    value={newComments[event.id] || ''}
+                                    onChange={(e) =>
+                                        setNewComments(prevNewComments => ({
+                                            ...prevNewComments,
+                                            [event.id]: e.target.value
+                                        }))
+                                    }
+                                    required
+                                />
+                                <button type="submit">Post</button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleReport(event.name)}
+                                    className="report-btn"
+                                >
+                                    Report
+                                </button>
+                            </form>
+                        </div>
                     </div>
-
-                    <div className="action-buttons">
-                        <button onClick={handleLikeToggleHoli} className="like-btn" disabled={likedHoli}>
-                            Like
-                        </button>
-                        <button onClick={handleLikeToggleHoli} className="unlike-btn" disabled={!likedHoli}>
-                            Unlike
-                        </button>
-                        <button onClick={handleReportEventHoli} className="report-btn">
-                            Report this Event
-                        </button>
-                    </div>
-
-                    <div className="comments-section">
-                        <h4>Comments</h4>
-                        <ul className="comments-list">
-                            {commentsHoli.map((comment, index) => (
-                                <li key={index}>{comment}</li>
-                            ))}
-                        </ul>
-                        <form onSubmit={handleCommentSubmitHoli} className="comment-form">
-                            <input
-                                type="text"
-                                placeholder="Add a comment..."
-                                value={newCommentHoli}
-                                onChange={(e) => setNewCommentHoli(e.target.value)}
-                                required
-                            />
-                            <button type="submit">Post</button>
-                        </form>
-                    </div>
-                </div>
-
-<div className="event-card">
-    <h3>Christmas Celebration</h3>
-    <p>Date: December 25, 2024</p>
-    <p>Location: City Square, Montreal</p>
-    <p>Description: Celebrate Christmas with us! Enjoy carols, festive food, and activities for all ages. Bring your family and friends!</p>
-
-    <div className="christmas-image-carousel">
-        <button onClick={handlePreviousChristmasImage} className="carousel-btn">&lt;</button>
-        <img src={christmasImages[currentChristmasImageIndex]} alt="Christmas Event" className="christmas-image" />
-        <button onClick={handleNextChristmasImage} className="carousel-btn">&gt;</button>
-    </div>
-
-    <div className="action-buttons">
-        <button onClick={handleLikeToggleChristmas} className="like-btn" disabled={likedChristmas}>
-            Like
-        </button>
-        <button onClick={handleLikeToggleChristmas} className="unlike-btn" disabled={!likedChristmas}>
-            Unlike
-        </button>
-        <button onClick={handleReportEventChristmas} className="report-btn">
-            Report this Event
-        </button>
-    </div>
-
-    <div className="comments-section">
-        <h4>Comments</h4>
-        <ul className="comments-list">
-            {commentsChristmas.map((comment, index) => (
-                <li key={index}>{comment}</li>
-            ))}
-        </ul>
-        <form onSubmit={handleCommentSubmitChristmas} className="comment-form">
-            <input
-                type="text"
-                placeholder="Add a comment..."
-                value={newCommentChristmas}
-                onChange={(e) => setNewCommentChristmas(e.target.value)}
-                required
-            />
-            <button type="submit">Post</button>
-        </form>
-    </div>
-</div>
-
+                ))}
             </div>
 
             <footer className="footer">
