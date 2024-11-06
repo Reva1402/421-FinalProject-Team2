@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth, firestore } from './firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc } from 'firebase/firestore';
 import './UserHomePage.css';
 
 const HomePage = () => {
@@ -24,11 +24,25 @@ const HomePage = () => {
 
         fetchEvents();
 
+        const fetchUserData = async (userId) => {
+            try {
+                const userDoc = await getDoc(doc(firestore, 'users', userId));
+                if (userDoc.exists()) {
+                    setUserName(userDoc.data().firstName || "User");
+                } else {
+                    setUserName("User");
+                }
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                setUserName("User");
+            }
+        };
+
         const unsubscribe = auth.onAuthStateChanged(currentUser => {
             if (currentUser) {
-                setUserName(currentUser.displayName || currentUser.email);
+                fetchUserData(currentUser.uid);
             } else {
-                setUserName('Guest');
+                setUserName("Guest");
             }
         });
 
@@ -95,8 +109,7 @@ const HomePage = () => {
                 <ul className="nav-links">
                     {userName !== 'Guest' && (
                         <>
-                            <li onClick={() => navigate('/profile')}>Profile</li>
-                            <li onClick={() => navigate('/UserEditProfile')}>Edit Profile</li>
+                            <li onClick={() => navigate('/userProfile')}>Profile</li>
                             <li onClick={() => navigate('/events')}>My Events</li>
                             <li onClick={() => navigate('/createevent')}>Create An Event</li>
                             <li onClick={() => navigate('/notifications')}>Notifications</li>
@@ -104,7 +117,6 @@ const HomePage = () => {
                         </>
                     )}
                 </ul>
-                <div className="user-greeting"></div>
                 {userName !== 'Guest' && (
                     <button className="logout-btn" onClick={handleLogout}>Logout</button>
                 )}
