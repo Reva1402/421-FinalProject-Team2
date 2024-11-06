@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { database, auth, firestore } from './firebaseConfig';
-import './Styling.css';
+import './WelcomePage.css';
 import { ref, doc, setDoc, getDoc } from 'firebase/firestore';
+import bgimage from './images/bgimage.jpg';
+
+
 
 
 
@@ -15,32 +18,24 @@ const SignupPage = () => {
         mobilenumber: '',
         password: '',
         gender: '',
+        dateofbirth: '',
         role: '',
         address: '',
         country: '',
-        province: ''
+        province: '',
+        profilepicture: ''
 
     });
+    const image = './images/bgimage.jpg';
     const [provinces, setProvinces] = useState([]);
     const [error, setError] = useState('');
-
-
-
     const navigate = useNavigate();
-
-
-
-
-
-
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-
         setFormData({
             ...formData,
             [name]: value
         });
-
 
         if (name === 'country') {
             handleCountryChange(value);
@@ -70,7 +65,9 @@ const SignupPage = () => {
         e.preventDefault();
 
 
-        if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.mobilenumber || !formData.gender || !formData.role || !formData.address || !formData.country) {
+        if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.mobilenumber 
+            || !formData.gender || !formData.role || !formData.address || !formData.country || !formData.province 
+            || !formData.dateofbirth)  {
             setError('Please fill all required fields.');
             return;
         }
@@ -102,9 +99,12 @@ const SignupPage = () => {
                 password: formData.password,
                 gender: formData.gender,
                 role: formData.role,
+                dateofbirth: formData.dateofbirth,
                 address: formData.address,
                 country: formData.country,
-                province: formData.province
+                province: formData.province,
+                profilepicture: formData.profilepicture
+              
             });
 
             console.log('User signed up and document created:', user);
@@ -119,11 +119,40 @@ const SignupPage = () => {
         navigate('/login');
       };
 
-
-
-
+      const handleProfilePictureChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            setFormData({
+              ...formData,
+              profilepicture: reader.result
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      };
 
     return (
+        <div>
+            <nav className="navbar">
+                <div className="navbar-brand" onClick={() => navigate('/')}>
+                    Eventopia
+                </div>
+                <ul className="nav-links">
+                    <li className="nav-item" onClick={() => navigate('/services')}>Services</li>
+                    <button className="nav-item" onClick={handleLoginClick}>Login</button>
+                    <li className="nav-item" onClick={() => navigate('/myevents')}>Call us @ +1 123 456 789</li>
+                </ul>
+               
+            </nav>
+
+
+        <div>
+            <div className="bg-image">
+                <img src={bgimage}>
+                </img> </div>
+        </div>
         <div className="signup-container">
             <div className="form-wrapper">
                 <h1 className='text-center'>Sign Up</h1>
@@ -234,6 +263,18 @@ const SignupPage = () => {
                     </div>
 
                     <div className='form-group'>
+                        <label>Date of Birth</label>
+                        <input
+                            type='date'
+                            className='form-control'
+                            name='dateofbirth'
+                            value={formData.dateofbirth}
+                            onChange={handleInputChange}    
+                            required
+                        />
+                    </div>
+
+                    <div className='form-group'>
                         <label>Address</label>
                         <input
                             type='text'
@@ -280,6 +321,16 @@ const SignupPage = () => {
                         </div>
                     )}
 
+                    <div>
+                        <label>Profile Picture</label>
+                        <input
+                            type="file"
+                            name="profilePicture"
+                            onChange={handleProfilePictureChange}
+                        />
+                    </div>
+
+
                     <div className="button-group-signup">
                         <button type='submit' className='signup-btn-custom'>
                             Sign Up
@@ -289,6 +340,7 @@ const SignupPage = () => {
                     </div>
                 </form>
             </div>
+        </div>
         </div>
 
 
