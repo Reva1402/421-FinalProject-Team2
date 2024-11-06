@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, firestore} from './firebaseConfig.js';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import './Styling.css';
+import './LoginPage.css';
 import Model from './Model.js'; 
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -111,7 +111,7 @@ const LoginPage = () => {
               required
             />
           </div>
-          <button className="btn btn-primary reset-btn" type="submit">Send Reset Email</button>
+          <button className=" reset-btn" type="submit">Send Reset Email</button>
         </form>
       </Model>
     </div>
